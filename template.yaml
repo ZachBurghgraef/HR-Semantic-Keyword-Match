@@ -11,15 +11,19 @@ Resources:
   SimilarityLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: layers/python/
+      LayerName: similarity-dependencies
+      Description: Dependencies for semantic similarity
+      ContentUri: ./
       CompatibleRuntimes:
         - python3.12
+    Metadata:
+      BuildMethod: python3.12
 
   SimilarityFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: app.lambda_handler
+      CodeUri: ./
+      Handler: app.handler
       Layers:
         - !Ref SimilarityLayer
       Events:

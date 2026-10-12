@@ -2,40 +2,78 @@ name: Deploy to AWS Lambda
 
 on:
   push:
-    - main # Deploy on push to main branch
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Clean up stuck stack
+        run: |
+          STATUS=$(aws cloudformation describe-stacks \
+            --stack-name semantic-similarity-stack \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          echo "Stack status: $STATUS"
+          if [ "$STATUS" = "REVIEW_IN_PROGRESS" ]; then
+            echo "Stack is stuck in REVIEW_IN_PROGRESS, deleting..."
+            aws cloudformation delete-stack --stack-name semantic-similarity-stack
+            aws cloudformation wait stack-delete-complete --stack-name semantic-similarity-stack
+            echo "Stack deleted successfully"
+          else
+            echo "Stack is in state $STATUS, no cleanup needed"
+          fi
+
       - name: Build and Deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
         run: |
           sam build
+
+          echo "=== Searching for samconfig files after build ==="
+          find . -name "samconfig*" -not -path "./.venv/*"
+
+          echo "=== Creating empty samconfig to override any found ==="
+          cat > /tmp/samconfig.toml << 'EOF'
+          version = 0.1
+
+          [default.deploy.parameters]
+          EOF
+
+          echo "=== samconfig contents ==="
+          cat /tmp/samconfig.toml
+
           sam deploy \
+            --config-file /tmp/samconfig.toml \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --stack-name semantic-similarity-stack \
-            --s3-prefic semantic-similarity \
-            --capabilities CAPABILITY_IAM
+            --s3-bucket ${{ secrets.AWS_SAM_BUCKET }} \
+            --s3-prefix semantic-similarity \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
       - name: Output API Endpoint
         run: |
-        aws cloudformation describe-stacks \
-          --stack-name semantic-similarity-stack \
-          --query 'Stacks[0].Outputs[0].OutputValue' \
-          --output text 
+          aws cloudformation describe-stacks \
+            --stack-name semantic-similarity-stack \
+            --query 'Stacks[0].Outputs[0].OutputValue' \
+            --output text

@@ -1,0 +1,41 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    - main # Deploy on push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Build and Deploy
+        run: |
+          sam build
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name semantic-similarity-stack \
+            --s3-prefic semantic-similarity \
+            --capabilities CAPABILITY_IAM
+
+      - name: Output API Endpoint
+        run: |
+        aws cloudformation describe-stacks \
+          --stack-name semantic-similarity-stack \
+          --query 'Stacks[0].Outputs[0].OutputValue' \
+          --output text 

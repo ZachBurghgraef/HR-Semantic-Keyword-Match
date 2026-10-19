@@ -1,0 +1,15 @@
+# Keep the image build context small. CDK also reads this file when it
+# hashes the directory to decide whether the image needs rebuilding.
+.git/
+.github/
+.claude/
+.venv/
+venv/
+infra/
+notebooks/
+data/
+aws/
+**/__pycache__/
+*.pyc
+*.ipynb
+README.md

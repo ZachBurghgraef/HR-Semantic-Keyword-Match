@@ -1,79 +1,75 @@
-name: Deploy to AWS Lambda
+name: Deploy with AWS CDK
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'notebooks/**'
+      - 'README.md'
   workflow_dispatch:
+
+# Never run two deploys of the same stack at once.
+concurrency:
+  group: cdk-deploy
+  cancel-in-progress: false
+
+# id-token: write lets the job request an OIDC token from GitHub (used to log
+# in to AWS below). Listing permissions also drops everything else to none,
+# so contents: read is needed for actions/checkout.
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    defaults:
+      run:
+        working-directory: infra
+
     steps:
       - uses: actions/checkout@v4
+
+      # The CDK CLI is a Node.js tool, even when the app itself is written in Python.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: infra/requirements.txt
 
+      - name: Install CDK CLI and CDK Python library
+        run: |
+          npm install -g aws-cdk@2.1145.0
+          pip install -r requirements.txt
+
+      # No stored keys: the action asks GitHub for a signed OIDC token and trades
+      # it with AWS STS for 1-hour credentials for the role in GitHubOidcStack.
+      # That role only trusts this repo's main branch.
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: github-cdk-deploy-${{ github.run_id }}
           aws-region: us-east-1
 
-      - name: Clean up stuck stack
-        run: |
-          STATUS=$(aws cloudformation describe-stacks \
-            --stack-name semantic-similarity-stack \
-            --query 'Stacks[0].StackStatus' \
-            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
-          echo "Stack status: $STATUS"
-          if [ "$STATUS" = "REVIEW_IN_PROGRESS" ]; then
-            echo "Stack is stuck in REVIEW_IN_PROGRESS, deleting..."
-            aws cloudformation delete-stack --stack-name semantic-similarity-stack
-            aws cloudformation wait stack-delete-complete --stack-name semantic-similarity-stack
-            echo "Stack deleted successfully"
-          else
-            echo "Stack is in state $STATUS, no cleanup needed"
-          fi
+      # The app has two stacks, so name the one to deploy. GitHubOidcStack is
+      # deployed by hand once; CI never touches the role it logs in with.
+      # Prints what will change in AWS (handy for learning what CDK generates).
+      - name: CDK diff
+        run: cdk diff RankerApiStack
 
-      - name: Build and Deploy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: |
-          sam build
+      # Builds the Docker image, pushes it to ECR, then creates/updates the
+      # CloudFormation stack. --require-approval never skips the interactive
+      # "approve IAM changes?" prompt, since there's nobody to answer it in CI.
+      - name: CDK deploy
+        run: cdk deploy RankerApiStack --require-approval never --outputs-file cdk-outputs.json
 
-          echo "=== Searching for samconfig files after build ==="
-          find . -name "samconfig*" -not -path "./.venv/*"
-
-          echo "=== Creating empty samconfig to override any found ==="
-          cat > /tmp/samconfig.toml << 'EOF'
-          version = 0.1
-
-          [default.deploy.parameters]
-          EOF
-
-          echo "=== samconfig contents ==="
-          cat /tmp/samconfig.toml
-
-          sam deploy \
-            --config-file /tmp/samconfig.toml \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --stack-name semantic-similarity-stack \
-            --s3-bucket ${{ secrets.AWS_SAM_BUCKET }} \
-            --s3-prefix semantic-similarity \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
-
-      - name: Output API Endpoint
-        run: |
-          aws cloudformation describe-stacks \
-            --stack-name semantic-similarity-stack \
-            --query 'Stacks[0].Outputs[0].OutputValue' \
-            --output text
+      - name: Show API URL
+        run: cat cdk-outputs.json

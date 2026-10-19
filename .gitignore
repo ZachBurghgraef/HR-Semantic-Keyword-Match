@@ -224,3 +224,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 .aws-sam/
+# AWS CDK
+cdk.out/
+infra/cdk-outputs.json
+
+# AWS CLI installer (download it again from AWS if needed)
+aws/
+awscliv2.zip

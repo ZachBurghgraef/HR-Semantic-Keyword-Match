@@ -1,0 +1,22 @@
+[project]
+name = "hr-semantic-keyword-match"
+version = "0.1.0"
+description = "Rank candidates by semantic similarity to job titles (FastAPI on AWS Lambda)"
+readme = "README.md"
+authors = [
+    { name = "Zachary Burghgraef", email = "burghgraefzachary@gmail.com" }
+]
+# Matches the Lambda runtime (public.ecr.aws/lambda/python:3.12 in the Dockerfile).
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.142.4",
+    "mangum==0.22.0",
+    "pydantic==2.13.5",
+    "sentence-transformers==6.1.0",
+    "torch==2.14.1",
+]
+
+# This is an app, not an installable package: uv just manages the environment.
+# Keep these pins in sync with requirements.txt, which the Dockerfile installs from.
+[tool.uv]
+package = false

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sentence_transformers import util, SentenceTransformer
 from typing import Optional
 import datetime
+import os
 import uuid
 from mangum import Mangum
 
@@ -14,7 +15,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-model = SentenceTransformer('TechWolf/JobBERT-v2') # fine tuned for job listings
+# fine tuned for job listings. In Lambda, MODEL_DIR points at the copy baked into
+# the container image; locally it falls back to downloading from Hugging Face.
+model = SentenceTransformer(os.environ.get('MODEL_DIR', 'TechWolf/JobBERT-v2'))
 
 
 # ========== Request/Response Models =============

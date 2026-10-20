@@ -29,6 +29,8 @@ class GitHubOidcStack(Stack):
         *,
         github_repo: str,
         branch: str = "main",
+        owner_id: int | None = None,
+        repo_id: int | None = None,
         provider_already_exists: bool = False,
         **kwargs,
     ) -> None:
@@ -59,15 +61,25 @@ class GitHubOidcStack(Stack):
         # The trust policy says who may assume the role. OpenIdConnectPrincipal
         # adds the sts:AssumeRoleWithWebIdentity action; the conditions narrow
         # it from "anyone with a GitHub token" to "this repo's main branch".
-        # GitHub sets "sub" to repo:<owner>/<repo>:ref:refs/heads/<branch> for
-        # push and workflow_dispatch runs. Pull requests and other branches get
-        # a different "sub", so they can't assume the role.
+        # For push and workflow_dispatch runs GitHub sets "sub" to
+        # repo:<owner>/<repo>:ref:refs/heads/<branch>. Repos that use GitHub's
+        # immutable subject format (this one does) put the numeric IDs in too:
+        # repo:<owner>@<owner_id>/<repo>@<repo_id>:ref:refs/heads/<branch>.
+        # Check which one with
+        #   curl https://api.github.com/repos/<owner>/<repo>/actions/oidc/customization/sub
+        # Pull requests and other branches get a different "sub", so they can't
+        # assume the role. The match is exact and case-sensitive.
+        owner, repo_name = github_repo.split("/")
+        if owner_id and repo_id:
+            subject_repo = f"{owner}@{owner_id}/{repo_name}@{repo_id}"
+        else:
+            subject_repo = github_repo
         principal = iam.OpenIdConnectPrincipal(
             provider,
             conditions={
                 "StringEquals": {
                     f"{GITHUB_OIDC_HOST}:aud": "sts.amazonaws.com",
-                    f"{GITHUB_OIDC_HOST}:sub": f"repo:{github_repo}:ref:refs/heads/{branch}",
+                    f"{GITHUB_OIDC_HOST}:sub": f"repo:{subject_repo}:ref:refs/heads/{branch}",
                 },
             },
         )

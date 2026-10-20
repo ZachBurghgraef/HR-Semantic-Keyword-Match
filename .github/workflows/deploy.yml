@@ -49,6 +49,19 @@ jobs:
           npm install -g aws-cdk@2.1145.0
           pip install -r requirements.txt
 
+      # Fail early with a readable message if the role ARN variable is missing or
+      # malformed (STS only says "Request ARN is invalid"). A role ARN isn't
+      # secret, so printing it is fine.
+      - name: Check AWS_DEPLOY_ROLE_ARN
+        env:
+          ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          echo "AWS_DEPLOY_ROLE_ARN = [$ROLE_ARN]"
+          if [[ ! "$ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]; then
+            echo "::error::AWS_DEPLOY_ROLE_ARN must be a repository variable shaped like arn:aws:iam::123456789012:role/RoleName, with no spaces, quotes or 'GitHubOidcStack.DeployRoleArn =' prefix."
+            exit 1
+          fi
+
       # No stored keys: the action asks GitHub for a signed OIDC token and trades
       # it with AWS STS for 1-hour credentials for the role in GitHubOidcStack.
       # That role only trusts this repo's main branch.

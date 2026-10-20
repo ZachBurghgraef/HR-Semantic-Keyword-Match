@@ -26,6 +26,9 @@ GitHubOidcStack(
     "GitHubOidcStack",
     github_repo="ZachBurghgraef/HR-Semantic-Keyword-Match",
     branch="main",
+    # This repo uses GitHub's immutable OIDC subject, which includes these IDs.
+    owner_id=32226162,
+    repo_id=1412423117,
     provider_already_exists=app.node.try_get_context("github_oidc_provider_exists")
     in (True, "true"),
     env=env,

@@ -7,7 +7,10 @@ to AWS with a short-lived token instead of the stored `AWS_ACCESS_KEY_ID` /
 - **An IAM OIDC provider** for `token.actions.githubusercontent.com`. This tells
   AWS to trust tokens signed by GitHub. There can be only one per account.
 - **An IAM role** (`GitHubDeployRole`) whose trust policy accepts only tokens
-  for `repo:ZachBurghgraef/HR-Semantic-Keyword-Match:ref:refs/heads/main`.
+  for `repo:ZachBurghgraef@32226162/HR-Semantic-Keyword-Match@1412423117:ref:refs/heads/main`.
+  This repo uses GitHub's *immutable subject* format, which adds the numeric
+  owner and repo IDs. Check a repo's format with
+  `curl https://api.github.com/repos/<owner>/<repo>/actions/oidc/customization/sub`.
   Its only permission is `sts:AssumeRole` on `cdk-*` roles, the roles that
   `cdk bootstrap` created. `cdk deploy` does all real work through those.
 

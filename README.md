@@ -93,6 +93,8 @@ my-hr-ranking-app/
 
 When you choose a standout candidate, the backend shifts your initial keyword objective vector using a linear blend controlled by an adjustment factor ($\alpha = 0.4$):
 
-$$\vec{V}_{\text{new}} = (1 - \alpha) \cdot \vec{V}_{\text{initial\_keywords}} + \alpha \cdot \vec{V}_{\text{promising\_candidate}}$$
+$$
+\vec{V}_{\text{new}} = (1 - \alpha) \cdot \vec{V}_{\text{initial\_keywords}} + \alpha \cdot \vec{V}_{\text{promising\_candidate}}
+$$
 
 This updates your search target relative to real candidate behaviors, optimizing downstream semantic cosine similarities immediately.

@@ -1,0 +1,30 @@
+[project]
+name = "hr-semantic-keyword-match"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Zachary Burghgraef", email = "burghgraefzachary@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "torch",
+    "sentence-transformers>=3.2.0",
+]
+
+[project.scripts]
+hr-semantic-keyword-match = "hr_semantic_keyword_match:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" }
+]

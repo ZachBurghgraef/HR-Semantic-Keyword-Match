@@ -1,3 +1,15 @@
+# --- Node Dependencies ---
+node_modules/
+
+# --- AWS Installer Packages (Clean up from root) ---
+aws/
+awscliv2.zip
+
+# --- AWS Amplify Gen 2 Environment State ---
+# This file maps your front-end to live AWS resources and changes per environment.
+amplify_outputs.json
+.amplify/
+
 # hide data files
 data/*
 

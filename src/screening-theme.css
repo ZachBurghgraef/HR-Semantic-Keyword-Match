@@ -1,0 +1,18 @@
+:root {
+  --sd-bg: oklch(0.975 0.008 85);
+  --sd-fg: oklch(0.22 0.03 160);
+  --sd-card: oklch(1 0 0);
+  --sd-primary: oklch(0.42 0.09 160);
+  --sd-primary-fg: oklch(0.984 0.003 247.858);
+  --sd-muted: oklch(0.968 0.007 247.896);
+  --sd-muted-fg: oklch(0.554 0.046 257.417);
+  --sd-accent: oklch(0.93 0.04 150);
+  --sd-border: oklch(0.929 0.013 255.508);
+  --sd-danger: oklch(0.577 0.245 27.325);
+  --sd-ring: oklch(0.704 0.04 256.788);
+}
+.sd-hero { background: linear-gradient(160deg, oklch(0.93 0.05 150), oklch(0.96 0.03 80)); }
+.sd-shadow { box-shadow: 0 10px 30px -12px oklch(0.42 0.09 160 / 0.25); }
+.sd-display { font-family: Georgia, "Times New Roman", serif; }
+.sd-input { outline: none; }
+.sd-input:focus { box-shadow: 0 0 0 2px var(--sd-ring); }

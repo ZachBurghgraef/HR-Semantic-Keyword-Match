@@ -1,0 +1,6 @@
+# Exclude heavy host machine dependencies from the container build context
+node_modules/
+aws/
+awscliv2.zip
+amplify_outputs.json
+.git/

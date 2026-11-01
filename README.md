@@ -23,22 +23,7 @@ This application runs entirely on an **ultra-low-cost, zero-idle serverless infr
 * **Authentication:** Fully secured using native **Amazon Cognito** user pools.
 * **AI Backend:** A containerized **Python AWS Lambda function** deployed as a 10GB Docker image to natively support heavy machine learning footprints.
 * **ML Inference Pipeline:** Powered by **PyTorch** and **Sentence-Transformers** utilizing the specialized `TechWolf/JobBERT-v2` transformer model.
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                          AWS Amplify Gen 2                             │
-│                                                                        │
-│  ┌──────────────┐      ┌────────────────┐      ┌────────────────────┐  │
-│  │ React / TS   ├─────►│ Amazon Cognito ├─────►│ Python AWS Lambda  │  │
-│  │ Frontend UI  │      │ (Secure Auth)  │      │ (Docker Container) │  │
-│  └──────────────┘      └────────────────┘      └─────────┬──────────┘  │
-└──────────────────────────────────────────────────────────────────┼─────┘
-▼
-┌──────────────────┐
-│ PyTorch + BERT   │
-│ Inference Engine │
-└──────────────────┘
 
-```
 > 💡 **Design Trade-off Note:** To keep the system completely cost-free at rest, the Lambda function handles model loading dynamically. This introduces a cold-start duration during initial invocations while the container initializes and spins up the BERT layers. Warm invocations leverage execution context caching in the container's temporary storage `/tmp` for near-instantaneous inference.
 
 ## 📂 Project Structure

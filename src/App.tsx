@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import './screening-theme.css';

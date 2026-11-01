@@ -3,21 +3,18 @@ backend:
   phases:
     build:
       commands:
-        # Install clean dependencies using the lockfile
-        - npm ci --cache .npm --prefer-offline
-        # Provision Cognito, IAM, and custom Lambda integration code
+        # Changed from npm ci to npm install
+        - npm install --cache .npm --prefer-offline
         - npx ampx pipeline-deploy
 frontend:
   phases:
     preBuild:
       commands:
-        - npm ci --cache .npm --prefer-offline
+        - npm install --cache .npm --prefer-offline
     build:
       commands:
-        # Compiles frontend assets and evaluates structural UI styling
         - npm run build
   artifacts:
-    # Vite outputs production bundles to the dist directory
     baseDirectory: dist
     files:
       - '**/*'

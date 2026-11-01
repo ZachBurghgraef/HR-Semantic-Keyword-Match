@@ -2,7 +2,7 @@
 
 A serverless, privacy-focused HR intelligence tool that ranks and refines candidate pools using semantic AI. Instead of relying on rigid, literal keyword matches, this system evaluates the conceptual intent of job titles and matching criteria using a fine-tuned BERT transformer model.
 
-🚀 **[Live Website coming soon!](https://github.com)**
+🚀 **[Checkout the Live Website!](https://main.dsrisyuuzm8cs.amplifyapp.com/)**
 
 ![Webpage ScreenShot](images/webpage_screenshot.png)
 
